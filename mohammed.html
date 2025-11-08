@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>نظام إدارة المخزون</title>
+<style>
+body {font-family: Arial; background:#f0f0f0; padding:20px;}
+h1 {text-align:center; color:#333;}
+input, button {padding:6px; margin:5px;}
+button {cursor:pointer;}
+table {width:100%; border-collapse:collapse; margin-top:20px; background:#fff;}
+table, th, td {border:1px solid #aaa;}
+th, td {padding:10px; text-align:center;}
+.msg {color:red;}
+</style>
+</head>
+<body>
+
+<h1>نظام إدارة المخزون</h1>
+
+<div>
+    <input type="text" id="productName" placeholder="اسم المنتج">
+    <input type="number" id="productQty" placeholder="الكمية">
+    <input type="number" id="productPrice" placeholder="السعر">
+    <button id="addBtn">إضافة/تحديث منتج</button>
+    <p id="msg" class="msg"></p>
+</div>
+
+<div>
+    <input type="text" id="searchInput" placeholder="ابحث عن المنتج...">
+</div>
+
+<table id="productTable">
+    <tr>
+        <th>الرقم</th>
+        <th>اسم المنتج</th>
+        <th>الكمية</th>
+        <th>السعر</th>
+        <th>إجمالي</th>
+        <th>أفعال</th>
+    </tr>
+</table>
+
+<h3>إجمالي قيمة المخزون: <span id="totalValue">0</span></h3>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+    let products = [];
+    const table = document.getElementById("productTable");
+    const msg = document.getElementById("msg");
+    const totalValueSpan = document.getElementById("totalValue");
+
+    function updateTable(){
+        // إزالة كل الصفوف ما عدا العنوان
+        table.innerHTML = `<tr>
+            <th>الرقم</th><th>اسم المنتج</th><th>الكمية</th><th>السعر</th><th>إجمالي</th><th>أفعال</th>
+        </tr>`;
+        let total = 0;
+        products.forEach((p,i)=>{
+            let row = table.insertRow();
+            row.insertCell(0).textContent = i+1;
+            row.insertCell(1).textContent = p.name;
+            row.insertCell(2).textContent = p.qty;
+            row.insertCell(3).textContent = p.price;
+            row.insertCell(4).textContent = p.qty * p.price;
+            total += p.qty * p.price;
+
+            let actions = row.insertCell(5);
+            let delBtn = document.createElement("button");
+            delBtn.textContent = "حذف";
+            delBtn.onclick = ()=>{ products.splice(i,1); updateTable(); };
+            actions.appendChild(delBtn);
+        });
+        totalValueSpan.textContent = total;
+    }
+
+    document.getElementById("addBtn").addEventListener("click", function(){
+        let name = document.getElementById("productName").value.trim();
+        let qty = parseInt(document.getElementById("productQty").value);
+        let price = parseFloat(document.getElementById("productPrice").value);
+
+        if(!name || isNaN(qty) || isNaN(price)){
+            msg.textContent = "يرجى تعبئة جميع الحقول بشكل صحيح!";
+            return;
+        }
+
+        msg.textContent = "";
+
+        // تحقق إذا المنتج موجود لتحديثه
+        let existing = products.find(p=>p.name.toLowerCase()===name.toLowerCase());
+        if(existing){
+            existing.qty += qty;
+            existing.price = price; // تحديث السعر الجديد
+        } else {
+            products.push({name:name, qty:qty, price:price});
+        }
+
+        document.getElementById("productName").value = "";
+        document.getElementById("productQty").value = "";
+        document.getElementById("productPrice").value = "";
+
+        updateTable();
+    });
+
+    // البحث
+    document.getElementById("searchInput").addEventListener("input", function(){
+        let search = this.value.toLowerCase();
+        Array.from(table.rows).forEach((row,index)=>{
+            if(index===0) return; // تخطي العنوان
+            let cell = row.cells[1].textContent.toLowerCase();
+            row.style.display = cell.includes(search) ? "" : "none";
+        });
+    });
+
+});
+</script>
+
+</body>
+</html>
